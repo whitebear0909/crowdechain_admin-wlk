@@ -1,0 +1,93 @@
+version: '3.7'
+services:
+  app-walkabout:
+    image: crowdechain/php-ecommerce:1.2
+    env_file:
+      - .env
+    volumes:
+    - ../:/www-data/walkabout/
+    - ./php/web.ini:/usr/local/etc/php/conf.d/web.ini
+    networks:
+      - backend
+      - frontend   
+    deploy:
+      # placement:
+      #   # constraints:
+      #   #   - node.hostname==mymb-app-1
+      replicas: 2
+      update_config:
+        parallelism: 2
+        delay: 9s
+      restart_policy:
+        condition: on-failure
+  phpmyadmin:
+    env_file:
+      - .env
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - PMA_HOST=${PMA_HOST}
+      - PHP_UPLOAD_MAX_FILESIZE=100MB
+    networks:
+      - backend
+      - frontend
+    deploy:
+      # placement:
+      #   # constraints:
+      #   #   - node.hostname==mymb-app-1
+  web-walkabout:
+    image: nginx:latest
+    env_file:
+      - .env
+    volumes:
+      - ../:/www-data/walkabout/
+      - ./conf.d:/etc/nginx/conf.d
+    networks:
+      - public
+      - frontend
+    deploy:
+      # placement:
+      #   # constraints:
+      #   #   - node.hostname==mymb-app-1 
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    ports:
+      - 80:80
+  db-mysql-walkabout:
+    env_file:
+        - .env
+    image: mysql:5.7.22
+    deploy:
+      # placement:
+      #   # constraints:
+      #   #   - node.hostname==mymb-app-1 
+      replicas: 1
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+        - MYSQL_DATABASE=walkabout
+        - MYSQL_ROOT_PASSWORD=z6GBW~s#
+        - MYSQL_USER=walkabout
+        - MYSQL_PASSWORD=ZU3XSqz%9KPN!mP2
+    ports:
+        - 3307:3306
+    volumes:
+      - db-mysql-walkabout:/var/lib/mysql/
+      - ./my.cnf:/etc/mysql/my.cnf
+    networks:
+      - backend
+networks:
+  backend:
+  frontend:
+  public:
+    external: true
+volumes:
+  db-mysql-walkabout:
